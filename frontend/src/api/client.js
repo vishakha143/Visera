@@ -1,9 +1,7 @@
-// 
-
 import axios from "axios";
 
 const apiClient = axios.create({
-  baseURL: "/api",
+  baseURL: import.meta.env.VITE_API_URL || "/api",
   withCredentials: true,
 });
 
@@ -20,7 +18,6 @@ apiClient.interceptors.request.use((config) => {
     // ignore
   }
 
-  // Let the browser set multipart boundary for FormData
   if (config.data instanceof FormData) {
     delete config.headers["Content-Type"];
   }
@@ -45,5 +42,5 @@ apiClient.interceptors.response.use(
   }
 );
 
-export {apiClient };
+export { apiClient };
 export default apiClient;
