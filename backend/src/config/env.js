@@ -25,9 +25,9 @@ module.exports = {
   jwtExpiresIN: process.env.JWT_EXPIRES_IN || "7d",
   cookieName: process.env.COOKIE_NAME || "arr_token",
   clientOrigins,
-  clientOrigin: clientOrigins[0] || "http://localhost:5173", // ← ADD THIS
+  clientOrigin: clientOrigins[0] || "http://localhost:5173",
   geminiApiKey: process.env.GEMINI_API_KEY || "",
-  geminiModel: process.env.GEMINI_MODEL || "gemini-3.6-flash",
+  geminiModel: process.env.GEMINI_MODEL || "gemini-2.0-flash",
   isProd: process.env.NODE_ENV === "production",
   resendApiKey: process.env.RESEND_API_KEY || "",
   smtpHost: process.env.SMTP_HOST || "smtp.gmail.com",

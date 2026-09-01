@@ -6,34 +6,43 @@ const port = Number(env.smtpPort) || 465;
 const transporter =
   env.smtpUser && env.smtpPass
     ? nodemailer.createTransport({
-      host: env.smtpHost || "smtp.gmail.com",
-      port,
-      secure: port === 465, // true for 465, false for 587
-      auth: {
-        user: env.smtpUser,
-        pass: env.smtpPass,
-      },
-      tls: {
-        rejectUnauthorized: process.env.NODE_ENV === "production" ? true : false,
-      },
-    })
+        host: env.smtpHost || "smtp.gmail.com",
+        port,
+        secure: port === 465,
+        auth: {
+          user: env.smtpUser,
+          pass: String(env.smtpPass).replace(/\s/g, ""),
+        },
+        connectionTimeout: 15000,
+        greetingTimeout: 15000,
+        socketTimeout: 15000,
+        tls: {
+          rejectUnauthorized: false,
+        },
+      })
     : null;
-
-if (transporter) {
-  transporter
-    .verify()
-    .then(() => console.log("[email] SMTP verify OK"))
-    .catch((e) => console.error("[email] SMTP verify FAIL:", e.message));
-}
 
 async function sendPasswordResetEmail(to, resetUrl) {
   if (!transporter) {
     console.log("[email] SMTP not configured. Reset URL:", resetUrl);
-    return { skipped: true };
+    throw new Error("SMTP not configured");
+  }
+
+  try {
+    await transporter.verify();
+    console.log("[email] SMTP verify OK");
+  } catch (e) {
+    console.error("[email] SMTP verify FAIL:", e.message);
+    throw e;
+  }
+
+  const from = env.emailFrom || env.smtpUser;
+  if (!from) {
+    throw new Error("EMAIL_FROM / SMTP_USER missing");
   }
 
   const info = await transporter.sendMail({
-    from: `"VISERA" <${env.emailFrom || env.smtpUser}>`,
+    from: `"VISERA" <${from}>`,
     to,
     subject: "Reset your VISERA password",
     html: `
