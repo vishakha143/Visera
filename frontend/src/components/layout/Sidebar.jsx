@@ -5,6 +5,7 @@ import {
   BarChart3,
   Layers,
   History,
+  BookOpen,
   Settings,
   LogOut,
 } from "lucide-react";
@@ -18,6 +19,7 @@ const NAV = [
   { to: "/insights", icon: BarChart3, label: "Insights" },
   { to: "/versions", icon: Layers, label: "Versions" },
   { to: "/history", icon: History, label: "History" },
+  { to: "/ats-guide", icon: BookOpen, label: "ATS Guide" },
 ];
 
 const ROW_BASE =

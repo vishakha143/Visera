@@ -10,6 +10,7 @@ const NAV_LINKS = [
   { label: "How it works", href: "#how-it-works" },
   { label: "Dashboard", href: "#dashboard-preview" },
   { label: "Pricing", href: "#pricing" },
+  { label: "ATS Guide", href: "/ats-guide" },
 ];
 
 export function Navbar() {
@@ -48,15 +49,19 @@ export function Navbar() {
           </Link>
 
           <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
-            {NAV_LINKS.map((l) => (
-              <a
-                key={l.href}
-                href={l.href}
-                className="px-3.5 py-1.5 rounded-full text-[13px] font-medium text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-2)] transition-colors"
-              >
-                {l.label}
-              </a>
-            ))}
+            {NAV_LINKS.map((l) => {
+              const className =
+                "px-3.5 py-1.5 rounded-full text-[13px] font-medium text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-2)] transition-colors";
+              return l.href.startsWith("#") ? (
+                <a key={l.href} href={l.href} className={className}>
+                  {l.label}
+                </a>
+              ) : (
+                <Link key={l.href} to={l.href} className={className}>
+                  {l.label}
+                </Link>
+              );
+            })}
           </nav>
 
           <div className="flex items-center gap-2">
@@ -92,16 +97,19 @@ export function Navbar() {
             animate={{ opacity: 1, height: "auto" }}
             className="md:hidden border-t border-[var(--border)] px-3 py-3 space-y-1"
           >
-            {NAV_LINKS.map((l) => (
-              <a
-                key={l.href}
-                href={l.href}
-                onClick={() => setOpen(false)}
-                className="block px-3 py-2 rounded-xl text-sm font-medium text-[var(--ink)] hover:bg-[var(--surface-2)]"
-              >
-                {l.label}
-              </a>
-            ))}
+            {NAV_LINKS.map((l) => {
+              const className =
+                "block px-3 py-2 rounded-xl text-sm font-medium text-[var(--ink)] hover:bg-[var(--surface-2)]";
+              return l.href.startsWith("#") ? (
+                <a key={l.href} href={l.href} onClick={() => setOpen(false)} className={className}>
+                  {l.label}
+                </a>
+              ) : (
+                <Link key={l.href} to={l.href} onClick={() => setOpen(false)} className={className}>
+                  {l.label}
+                </Link>
+              );
+            })}
             <Link
               to="/login"
               className="block px-3 py-2 rounded-xl text-sm font-medium text-[var(--ink)] hover:bg-[var(--surface-2)]"

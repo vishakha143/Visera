@@ -12,6 +12,7 @@ import Insights from "@/pages/Insights";
 import History from "@/pages/History";
 import Versions from "@/pages/Versions";
 import Landing from "@/pages/Landing";
+import ATSGuide from "@/pages/ATSGuide";
 import ExportPage from "@/pages/Export";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
@@ -38,6 +39,7 @@ function ProtectedShell() {
 export const router = createBrowserRouter([
   // Public routes
   { path: "/", element: <Landing /> },
+  { path: "/ats-guide", element: <ATSGuide /> },
   { path: "/login", element: <Login /> },
   { path: "/register", element: <Register /> },
   { path: "/forgot-password", element: <ForgotPassword /> },
