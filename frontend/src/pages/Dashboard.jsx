@@ -8,6 +8,8 @@ import {
   FileText,
   Sparkles,
   Loader2,
+  History,
+  TriangleAlert,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -49,17 +51,45 @@ export default function Dashboard() {
     latestResume,
     versionStack = [],
     activity = [],
+    topIssues = [],
   } = data;
 
   return (
     <div className="space-y-8">
-      <div className="mb-6">
-        <h2 className="font-display text-xl font-semibold tracking-tight">
-          Overview
-        </h2>
-        <p className="text-sm text-[var(--ink-muted)] mt-1">
-          Your resume performance at a glance.
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h2 className="font-display text-xl font-semibold tracking-tight">
+            Overview
+          </h2>
+          <p className="text-sm text-[var(--ink-muted)] mt-1">
+            Your resume performance at a glance.
+          </p>
+        </div>
+
+        {latestResume && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button
+              variant="accent"
+              size="sm"
+              onClick={() => navigate(`/resumes/${latestResume._id}`)}
+            >
+              <Sparkles size={14} />
+              Analyze Resume
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/resumes/${latestResume._id}/studio`)}
+            >
+              <FileText size={14} />
+              Open Resume Studio
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate("/versions")}>
+              <History size={14} />
+              View Versions
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* KPI Cards */}
@@ -173,6 +203,39 @@ export default function Dashboard() {
           )}
         </Card>
       </div>
+
+      {topIssues.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Priority Improvements</CardTitle>
+            <CardDescription>From your latest analysis — highest impact first</CardDescription>
+          </CardHeader>
+          <div className="space-y-2">
+            {topIssues.map((issue, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-3 p-3 rounded-xl bg-[var(--color-surface-2)] text-sm"
+              >
+                <div
+                  className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${
+                    issue.severity === "high"
+                      ? "bg-red-50 text-red-600"
+                      : issue.severity === "medium"
+                        ? "bg-amber-50 text-amber-600"
+                        : "bg-[var(--color-surface)] text-[var(--color-ink-muted)]"
+                  }`}
+                >
+                  <TriangleAlert size={13} />
+                </div>
+                <span className="flex-1">{issue.title}</span>
+                <Badge tone={issue.severity === "high" ? "danger" : issue.severity === "medium" ? "warning" : "neutral"}>
+                  {issue.severity}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* Bottom */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">

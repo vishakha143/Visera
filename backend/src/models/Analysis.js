@@ -5,12 +5,19 @@ const issueSchema = new mongoose.Schema({
     severity: {type: String , enum:["low", "medium","high"],default:"medium"},
     explanation: String,
     fix: String,
+    // "rule" = computed deterministically (counting/matching, no AI call);
+    // "ai" = Gemini's judgment. Lets the UI show users which is which.
+    source: {type: String, enum: ["rule", "ai"], default: "ai"},
 },
 {_id: false}
 );
 
 const strengthSchema = new mongoose.Schema(
-    {title:{type:String, required:true}},
+    {
+        title:{type:String, required:true},
+        evidence: String,
+        source: {type: String, enum: ["rule", "ai"], default: "ai"},
+    },
     {_id: false}
 );
 
@@ -66,7 +73,7 @@ const analysisSchema = new mongoose.Schema(
         promptTokens: Number,
         responseTokens: Number,
     },
-    {timeStamps: true}
+    {timestamps: true}
 );
 
 module.exports = mongoose.model("Analysis" , analysisSchema);

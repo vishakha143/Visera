@@ -24,6 +24,10 @@ class ApiError extends Error {
   static conflict(message = "Conflict", details) {
     return new ApiError(409, message, details);
   }
+
+  static internal(message = "Internal server error", details) {
+    return new ApiError(500, message, details);
+  }
 }
 
 module.exports = ApiError;

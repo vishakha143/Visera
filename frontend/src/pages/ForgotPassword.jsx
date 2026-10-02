@@ -21,12 +21,13 @@ export default function ForgotPassword() {
     setError("");
     setLoading(true);
     try {
+      // The backend already returns { ok: true } even for an unknown email
+      // (email-enumeration protection lives server-side), so a successful
+      // response here always means "request accepted" — nothing to hide.
       await apiClient.post("/auth/forgot-password", { email: email.trim() });
       setSent(true);
     } catch (err) {
-      // Still show success-style message to avoid email enumeration,
-      // or show err.message if you prefer:
-      setSent(true);
+      setError(err?.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -63,9 +64,18 @@ export default function ForgotPassword() {
         </p>
 
         {sent ? (
-          <div className="mt-9 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-sm text-[var(--color-ink-muted)]">
-            If an account exists for <strong>{email}</strong>, you will receive
-            reset instructions shortly. Check spam if needed.
+          <div className="mt-9 space-y-3">
+            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-sm text-[var(--color-ink-muted)]">
+              If an account exists for <strong>{email}</strong>, you will
+              receive reset instructions shortly. Check spam if needed.
+            </div>
+            <button
+              type="button"
+              onClick={() => setSent(false)}
+              className="text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] underline"
+            >
+              Wrong email? Try again
+            </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="mt-9 space-y-4">

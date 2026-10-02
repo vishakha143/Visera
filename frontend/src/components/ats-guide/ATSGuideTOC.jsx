@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { atsGuideTOC } from "@/data/atsGuideContent";
@@ -30,43 +30,68 @@ function useActiveSection(ids) {
   return active;
 }
 
-export function ATSGuideTOC() {
+function groupSections(items) {
+  const groups = [];
+  for (const item of items) {
+    const last = groups[groups.length - 1];
+    if (last && last.name === item.group) {
+      last.items.push(item);
+    } else {
+      groups.push({ name: item.group, items: [item] });
+    }
+  }
+  return groups;
+}
+
+export function ATSGuideTOC({ onSectionVisit }) {
   const ids = atsGuideTOC.map((s) => s.id);
   const active = useActiveSection(ids);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const groups = useMemo(() => groupSections(atsGuideTOC), []);
+
+  useEffect(() => {
+    if (active) onSectionVisit?.(active);
+  }, [active, onSectionVisit]);
 
   return (
     <>
       {/* Desktop: sticky left rail */}
       <nav
         aria-label="ATS Guide sections"
-        className="hidden lg:block sticky top-24 self-start w-56 shrink-0"
+        className="hidden lg:block sticky top-24 self-start w-56 shrink-0 max-h-[calc(100vh-7rem)] overflow-y-auto"
       >
         <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-ink-muted)] mb-3 px-2">
           Guide
         </p>
-        <ul className="space-y-0.5">
-          {atsGuideTOC.map((s) => (
-            <li key={s.id}>
-              <button
-                onClick={() => scrollToGuideSection(s.id)}
-                aria-current={active === s.id ? "true" : undefined}
-                className={cn(
-                  "w-full text-left px-2.5 py-1.5 rounded-lg text-sm transition-colors",
-                  active === s.id
-                    ? "bg-[var(--color-surface-2)] text-[var(--color-ink)] font-medium"
-                    : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] hover:bg-[var(--color-surface-2)]"
-                )}
-              >
-                {s.label}
-              </button>
-            </li>
-          ))}
-        </ul>
+        {groups.map((group) => (
+          <div key={group.name} className="mb-4 last:mb-0">
+            <p className="px-2.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-ink-muted)]/70 mb-1">
+              {group.name}
+            </p>
+            <ul className="space-y-0.5">
+              {group.items.map((s) => (
+                <li key={s.id}>
+                  <button
+                    onClick={() => scrollToGuideSection(s.id)}
+                    aria-current={active === s.id ? "true" : undefined}
+                    className={cn(
+                      "w-full text-left px-2.5 py-1.5 rounded-lg text-sm transition-colors",
+                      active === s.id
+                        ? "bg-[var(--color-surface-2)] text-[var(--color-ink)] font-medium"
+                        : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] hover:bg-[var(--color-surface-2)]"
+                    )}
+                  >
+                    {s.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </nav>
 
       {/* Mobile: jump-to-section dropdown */}
-      <div className="lg:hidden sticky top-16 z-30 -mx-4 px-4 py-2 bg-[var(--color-bg)]/95 backdrop-blur border-b border-[var(--color-border)]">
+      <div className="lg:hidden w-full min-w-0 sticky top-24 z-30 py-2 bg-[var(--color-bg)]/95 backdrop-blur border-b border-[var(--color-border)]">
         <button
           onClick={() => setMobileOpen((o) => !o)}
           aria-expanded={mobileOpen}
@@ -77,22 +102,29 @@ export function ATSGuideTOC() {
         </button>
         {mobileOpen && (
           <div className="mt-2 max-h-72 overflow-y-auto rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] shadow-hover p-1.5">
-            {atsGuideTOC.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => {
-                  scrollToGuideSection(s.id);
-                  setMobileOpen(false);
-                }}
-                className={cn(
-                  "w-full text-left px-3 py-2 rounded-lg text-sm",
-                  active === s.id
-                    ? "bg-[var(--color-surface-2)] font-medium"
-                    : "text-[var(--color-ink-muted)]"
-                )}
-              >
-                {s.label}
-              </button>
+            {groups.map((group) => (
+              <div key={group.name} className="mb-2 last:mb-0">
+                <p className="px-3 pt-1.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-ink-muted)]/70">
+                  {group.name}
+                </p>
+                {group.items.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => {
+                      scrollToGuideSection(s.id);
+                      setMobileOpen(false);
+                    }}
+                    className={cn(
+                      "w-full text-left px-3 py-2 rounded-lg text-sm",
+                      active === s.id
+                        ? "bg-[var(--color-surface-2)] font-medium"
+                        : "text-[var(--color-ink-muted)]"
+                    )}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
             ))}
           </div>
         )}

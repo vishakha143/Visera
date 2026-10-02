@@ -8,6 +8,8 @@ import {
   BookOpen,
   Settings,
   LogOut,
+  Target,
+  Briefcase,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
@@ -16,6 +18,8 @@ import AILogo from "./AILogo";
 const NAV = [
   { to: "/dashboard", icon: LayoutGrid, label: "Dashboard" },
   { to: "/resumes", icon: FileText, label: "Resumes" },
+  { to: "/job-matcher", icon: Target, label: "Job Matcher" },
+  { to: "/applications", icon: Briefcase, label: "Applications" },
   { to: "/insights", icon: BarChart3, label: "Insights" },
   { to: "/versions", icon: Layers, label: "Versions" },
   { to: "/history", icon: History, label: "History" },

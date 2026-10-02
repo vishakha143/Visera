@@ -31,6 +31,7 @@ export function GuideSearch({ onSearch }) {
         aria-hidden="true"
       />
       <input
+        id="ats-guide-search-input"
         type="search"
         value={query}
         onChange={(e) => {

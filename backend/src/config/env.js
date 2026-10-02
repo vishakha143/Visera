@@ -35,4 +35,5 @@ module.exports = {
   smtpUser: process.env.SMTP_USER || "",
   smtpPass: process.env.SMTP_PASS || "",
   emailFrom: process.env.EMAIL_FROM || process.env.SMTP_USER || "",
+  firebaseProjectId: process.env.FIREBASE_PROJECT_ID || "",
 };

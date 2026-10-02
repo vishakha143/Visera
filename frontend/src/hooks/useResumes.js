@@ -32,6 +32,22 @@ export function useFullVersion(resumeId, versionId) {
   });
 }
 
+// Save manual edits to a version's parsed sections (in place)
+export function useSaveVersion(resumeId, versionId) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (parsedSections) =>
+      resumesApi.saveVersion(resumeId, versionId, parsedSections),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["resumes", resumeId, "versions", versionId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["resumes", resumeId] });
+    },
+  });
+}
+
 // Get analysis for a version
 export function useAnalysisForVersion(resumeId, versionId) {
   return useQuery({
@@ -71,9 +87,11 @@ export function useApplyRewrites(resumeId) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload) => resumesApi.applyRewrites(resumeId, payload),
+    mutationFn: (payload) => resumesApi.rewrite(resumeId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["resumes", resumeId] });
+      queryClient.invalidateQueries({ queryKey: ["resumes"] });
+      queryClient.invalidateQueries({ queryKey: ["analytics", "versions"] });
     },
   });
 }

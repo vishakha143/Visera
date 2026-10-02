@@ -10,10 +10,13 @@ const ICONS = {
 };
 
 // Status is never conveyed by color alone — icon + text label always ship together.
+// Distinct hues per status (matching Badge.jsx's literal-color convention) so
+// "context" and "risk" stay visually distinguishable even though this theme's
+// own accent color is also amber.
 const TONES = {
-  recommended: "bg-[var(--color-success)]/10 text-[var(--color-success)]",
-  context: "bg-[var(--color-accent-soft)] text-[var(--color-accent-strong)]",
-  risk: "bg-[var(--color-warning)]/15 text-[var(--color-warning)]",
+  recommended: "bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400",
+  context: "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400",
+  risk: "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400",
   informational: "bg-[var(--color-surface-2)] text-[var(--color-ink-muted)]",
 };
 

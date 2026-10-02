@@ -1,15 +1,58 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, FileText, Sparkles } from "lucide-react";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { Loader2, FileText, Sparkles, CheckCircle2, XCircle, PenLine } from "lucide-react";
 import {
   useResume,
   useFullVersion,
   useAnalyzeResume,
+  useAnalysisForVersion,
+  useApplyRewrites,
 } from "@/hooks/useResumes";
 import { resumesApi } from "@/api/resumes";
 import { relativeTime } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { AtsGauge } from "@/components/dashboard/AtsGauge";
+import { ScoreBreakdown } from "@/components/analysis/ScoreBreakdown";
+import { StrengthsList } from "@/components/analysis/StrengthsList";
+import { IssuesList } from "@/components/analysis/IssuesList";
+import { KeywordChips } from "@/components/analysis/KeywordChips";
+import { BulletRewrites } from "@/components/analysis/BulletRewrites";
+
+const BREAKDOWN_LABELS = {
+  keywords: "Job Keyword Match",
+  formatting: "Formatting Safety",
+  impact: "Bullet Impact",
+  clarity: "Clarity",
+};
+
+function toBreakdownList(scoreBreakdown) {
+  if (!scoreBreakdown) return [];
+  return Object.entries(BREAKDOWN_LABELS)
+    .filter(([key]) => scoreBreakdown[key] != null)
+    .map(([key, label]) => ({ label, value: scoreBreakdown[key], max: 25 }));
+}
+
+function Banner({ tone, message, onDismiss }) {
+  if (!message) return null;
+  const Icon = tone === "error" ? XCircle : CheckCircle2;
+  return (
+    <div
+      className={`flex items-start gap-2.5 rounded-xl px-4 py-3 text-sm ${
+        tone === "error"
+          ? "bg-red-50 text-red-700"
+          : "bg-[var(--color-success)]/10 text-[var(--color-success)]"
+      }`}
+    >
+      <Icon size={16} className="mt-0.5 shrink-0" />
+      <span className="flex-1">{message}</span>
+      <button onClick={onDismiss} className="text-xs underline shrink-0">
+        Dismiss
+      </button>
+    </div>
+  );
+}
 
 export default function ResumeDetail() {
   const { id } = useParams();
@@ -46,17 +89,43 @@ export default function ResumeDetail() {
   const sections = version?.parsedSections;
 
   const analyze = useAnalyzeResume(id);
+  const applyRewrites = useApplyRewrites(id);
+
+  // Persisted analysis for whichever version is currently being viewed.
+  const { data: analysisPayload, isFetching: analysisLoading } =
+    useAnalysisForVersion(id, activeVersionId);
+  const persistedAnalysis = analysisPayload?.analysis ?? null;
+
+  // A freshly-run analysis (this session) takes priority over what's persisted,
+  // since it may target a version whose stored analysis hasn't refetched yet.
+  // Only valid for the version it was run against — switching versions falls
+  // back to whatever's persisted for that version instead.
+  const [freshAnalysis, setFreshAnalysis] = useState(null);
+  const displayedAnalysis =
+    (freshAnalysis?.versionId === activeVersionId ? freshAnalysis : null) ||
+    persistedAnalysis;
+
+  // All analyses for this resume, to compute score delta vs the previous run.
+  const { data: analysesPayload } = useQuery({
+    queryKey: ["resumes", id, "analyses"],
+    queryFn: () => resumesApi.analyses(id),
+    enabled: !!id,
+  });
+  const allAnalyses = analysesPayload?.analyses || [];
+  const scoreDelta = (() => {
+    if (!displayedAnalysis) return 0;
+    const idx = allAnalyses.findIndex((a) => a._id === displayedAnalysis._id);
+    const previous = idx >= 0 ? allAnalyses[idx + 1] : null;
+    return previous ? displayedAnalysis.atsScore - previous.atsScore : 0;
+  })();
+
+  const [banner, setBanner] = useState(null);
 
   // Compare
   const [fromId, setFromId] = useState("");
   const [toId, setToId] = useState("");
   const [diff, setDiff] = useState(null);
   const [diffLoading, setDiffLoading] = useState(false);
-
-  // Analysis + apply rewrites
-  const [analysis, setAnalysis] = useState(null);
-  const [selected, setSelected] = useState([]);
-  const [rewriteLoading, setRewriteLoading] = useState(false);
 
   useEffect(() => {
     if (versions.length >= 2) {
@@ -70,57 +139,38 @@ export default function ResumeDetail() {
   }, [versions]);
 
   async function handleAnalyze() {
+    setBanner(null);
     try {
       const result = await analyze.mutateAsync({
+        versionId: activeVersionId,
         targetRole: "Full Stack Developer",
       });
       const a = result?.analysis || result;
-      setAnalysis(a);
-      setSelected((a?.bulletRewrites || []).map((_, i) => i));
+      setFreshAnalysis(a);
       queryClient.invalidateQueries({ queryKey: ["resumes", id] });
     } catch (err) {
-      alert(err?.message || "Analysis failed");
+      setBanner({ tone: "error", message: err?.message || "We couldn't analyze this resume right now. Please try again." });
     }
   }
 
-  function toggleIndex(i) {
-    setSelected((prev) =>
-      prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i]
-    );
-  }
-
-  async function handleApplyRewrites() {
-    if (!analysis?._id) {
-      alert("Run analysis first");
-      return;
-    }
-    if (selected.length === 0) {
-      alert("Select at least one rewrite");
+  async function handleApplyRewrites(selectedIds) {
+    if (!displayedAnalysis?._id) {
+      setBanner({ tone: "error", message: "Run an analysis first, then select rewrites to apply." });
       return;
     }
     try {
-      setRewriteLoading(true);
-      const result = await resumesApi.rewrite(id, {
-        analysisId: analysis._id,
-        selected,
+      const result = await applyRewrites.mutateAsync({
+        analysisId: displayedAnalysis._id,
+        selected: selectedIds,
       });
-      await queryClient.invalidateQueries({ queryKey: ["resumes", id] });
-      await queryClient.invalidateQueries({ queryKey: ["resumes"] });
-      await queryClient.invalidateQueries({
-        queryKey: ["analytics", "versions"],
-      });
-      setAnalysis(null);
-      setSelected([]);
+      setFreshAnalysis(null);
 
-      // Jump to the new version if API returns it
       const newId = result?.version?._id;
       if (newId) setSelectedVersionId(newId);
 
-      alert("Rewrites applied — new version created");
+      setBanner({ tone: "success", message: "Rewrites applied — a new version was created." });
     } catch (err) {
-      alert(err?.message || "Apply rewrites failed");
-    } finally {
-      setRewriteLoading(false);
+      setBanner({ tone: "error", message: err?.message || "Applying rewrites failed. Your resume was not changed." });
     }
   }
 
@@ -132,7 +182,7 @@ export default function ResumeDetail() {
       const data = await resumesApi.diff(id, fromId, toId, "words");
       setDiff(data);
     } catch (err) {
-      alert(err?.message || "Compare failed");
+      setBanner({ tone: "error", message: err?.message || "Comparing versions failed." });
     } finally {
       setDiffLoading(false);
     }
@@ -162,6 +212,7 @@ export default function ResumeDetail() {
   }
 
   const basics = sections?.basics || {};
+  const breakdown = toBreakdownList(displayedAnalysis?.scoreBreakdown);
 
   return (
     <div className="space-y-8">
@@ -171,6 +222,8 @@ export default function ResumeDetail() {
       >
         ← All resumes
       </Link>
+
+      <Banner {...banner} onDismiss={() => setBanner(null)} />
 
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -191,24 +244,90 @@ export default function ResumeDetail() {
           </div>
         </div>
 
-        <Button
-          variant="accent"
-          onClick={handleAnalyze}
-          disabled={analyze.isPending}
-        >
-          {analyze.isPending ? (
-            <>
-              <Loader2 size={15} className="animate-spin" />
-              Analyzing…
-            </>
-          ) : (
-            <>
-              <Sparkles size={15} />
-              Run ATS analysis
-            </>
-          )}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Link to={`/resumes/${id}/studio`}>
+            <Button variant="outline">
+              <PenLine size={15} />
+              Edit in Studio
+            </Button>
+          </Link>
+          <Button
+            variant="accent"
+            onClick={handleAnalyze}
+            disabled={analyze.isPending}
+          >
+            {analyze.isPending ? (
+              <>
+                <Loader2 size={15} className="animate-spin" />
+                Analyzing…
+              </>
+            ) : (
+              <>
+                <Sparkles size={15} />
+                {displayedAnalysis ? "Re-analyze this version" : "Run ATS analysis"}
+              </>
+            )}
+          </Button>
+        </div>
       </div>
+
+      {/* Analysis overview */}
+      {analysisLoading && !displayedAnalysis ? (
+        <div className="flex items-center gap-2 text-sm text-[var(--ink-muted)]">
+          <Loader2 className="animate-spin" size={16} />
+          Checking for an existing analysis…
+        </div>
+      ) : displayedAnalysis ? (
+        <div className="space-y-6">
+          {displayedAnalysis.summary && (
+            <Card className="max-w-2xl" padding="sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-ink-muted)] mb-1.5">
+                Quick interpretation
+              </p>
+              <p className="text-sm leading-relaxed">{displayedAnalysis.summary}</p>
+            </Card>
+          )}
+
+          <div className="grid md:grid-cols-2 gap-5">
+            <AtsGauge score={displayedAnalysis.atsScore} delta={scoreDelta} />
+            <ScoreBreakdown breakdown={breakdown} />
+          </div>
+
+          {(displayedAnalysis.keywordsPresent?.length > 0 ||
+            displayedAnalysis.keywordsMissing?.length > 0) && (
+            <KeywordChips
+              present={displayedAnalysis.keywordsPresent}
+              missing={displayedAnalysis.keywordsMissing}
+            />
+          )}
+
+          <div className="grid md:grid-cols-2 gap-5">
+            <StrengthsList
+              strengths={(displayedAnalysis.strengths || []).map((s) => ({
+                title: s.title,
+                note: s.evidence,
+                source: s.source,
+              }))}
+            />
+            <IssuesList issues={displayedAnalysis.issues} />
+          </div>
+
+          {displayedAnalysis.bulletRewrites?.length > 0 && (
+            <BulletRewrites
+              rewrites={displayedAnalysis.bulletRewrites}
+              onApply={handleApplyRewrites}
+              isApplying={applyRewrites.isPending}
+            />
+          )}
+        </div>
+      ) : (
+        <Card className="py-10 text-center max-w-xl">
+          <p className="text-sm font-medium mb-1">No analysis yet for this version</p>
+          <p className="text-sm text-[var(--ink-muted)]">
+            Run an ATS analysis to see your score, strengths, issues, and keyword matches.
+          </p>
+        </Card>
+      )}
 
       {/* Versions list — click to view that version's content */}
       <div className="space-y-2">
@@ -216,7 +335,7 @@ export default function ResumeDetail() {
           Versions
         </h2>
         <p className="text-xs text-[var(--ink-muted)]">
-          Click a version to preview its parsed content below.
+          Click a version to preview its parsed content and analysis below.
         </p>
         {versions.length === 0 ? (
           <p className="text-sm text-[var(--ink-muted)]">No versions yet</p>
@@ -245,58 +364,6 @@ export default function ResumeDetail() {
           })
         )}
       </div>
-
-      {/* Suggested rewrites */}
-      {analysis?.bulletRewrites?.length > 0 && (
-        <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 space-y-4">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--ink-muted)]">
-              Suggested rewrites
-            </h2>
-            <Button
-              type="button"
-              variant="accent"
-              onClick={handleApplyRewrites}
-              disabled={rewriteLoading || selected.length === 0}
-            >
-              {rewriteLoading ? (
-                <>
-                  <Loader2 size={15} className="animate-spin" />
-                  Applying…
-                </>
-              ) : (
-                `Apply ${selected.length} rewrite(s)`
-              )}
-            </Button>
-          </div>
-
-          <div className="space-y-3">
-            {analysis.bulletRewrites.map((r, i) => (
-              <label
-                key={i}
-                className="flex gap-3 rounded-xl border border-[var(--border)] p-3 cursor-pointer hover:bg-[var(--surface-2)]"
-              >
-                <input
-                  type="checkbox"
-                  checked={selected.includes(i)}
-                  onChange={() => toggleIndex(i)}
-                  className="mt-1"
-                />
-                <div className="text-sm space-y-1 min-w-0">
-                  <p className="text-xs text-[var(--ink-muted)]">{r.section}</p>
-                  <p className="text-red-700/90 line-through">{r.original}</p>
-                  <p className="text-green-800">{r.rewritten}</p>
-                  {r.rationale ? (
-                    <p className="text-xs text-[var(--ink-muted)]">
-                      {r.rationale}
-                    </p>
-                  ) : null}
-                </div>
-              </label>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* Compare versions */}
       <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 space-y-4">
@@ -357,6 +424,36 @@ export default function ResumeDetail() {
                 )}
               </Button>
             </div>
+
+            {(() => {
+              const fromAnalysis = allAnalyses.find((a) => a.versionId === fromId || a.versionId?._id === fromId);
+              const toAnalysis = allAnalyses.find((a) => a.versionId === toId || a.versionId?._id === toId);
+              if (!fromAnalysis || !toAnalysis) return null;
+              const delta = toAnalysis.atsScore - fromAnalysis.atsScore;
+              const reasons = [];
+              const dims = { keywords: "Keyword alignment", formatting: "Formatting", impact: "Bullet impact", clarity: "Clarity" };
+              for (const [key, label] of Object.entries(dims)) {
+                const d = (toAnalysis.scoreBreakdown?.[key] ?? 0) - (fromAnalysis.scoreBreakdown?.[key] ?? 0);
+                if (d > 0) reasons.push(`${label} improved`);
+                else if (d < 0) reasons.push(`${label} declined`);
+                else reasons.push(`${label} remained stable`);
+              }
+              return (
+                <div className="rounded-xl bg-[var(--color-surface-2)] p-4 text-sm space-y-2">
+                  <p className="font-medium">
+                    Visera's analysis {delta > 0 ? "improved" : delta < 0 ? "decreased" : "stayed the same"} by{" "}
+                    {Math.abs(delta)} point{Math.abs(delta) === 1 ? "" : "s"}
+                    <span className="text-[var(--color-ink-muted)] font-normal">
+                      {" "}({fromAnalysis.atsScore} → {toAnalysis.atsScore})
+                    </span>
+                  </p>
+                  <p className="text-xs text-[var(--color-ink-muted)]">Why: {reasons.join(". ")}.</p>
+                  <p className="text-xs text-[var(--color-ink-muted)] italic">
+                    A higher analysis score doesn't guarantee a better hiring outcome.
+                  </p>
+                </div>
+              );
+            })()}
 
             {diff?.stats && (
               <p className="text-xs text-[var(--ink-muted)]">

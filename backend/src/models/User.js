@@ -13,8 +13,9 @@ const userSchema = new mongoose.Schema(
       index: true,
     },
     passwordHash: {
+      // Not required — accounts created via Google/GitHub sign-in have no
+      // password unless the user later sets one from Settings.
       type: String,
-      required: true,
       select: false,
     },
     name: {
@@ -22,6 +23,10 @@ const userSchema = new mongoose.Schema(
       required: true,
       trim: true,
       maxlength: 80,
+    },
+    avatarUrl: {
+      type: String,
+      default: "",
     },
     // Forgot-password
     passwordResetToken: {
@@ -32,6 +37,20 @@ const userSchema = new mongoose.Schema(
       type: Date,
       select: false,
     },
+    // Firebase-authenticated sign-in (Google / GitHub). A user can have both
+    // a password and one linked Firebase provider on the same account,
+    // matched by email.
+    firebaseUid: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true,
+    },
+    authProviders: {
+      type: [String],
+      enum: ["password", "google", "github"],
+      default: [],
+    },
   },
   { timestamps: true }
 );
@@ -41,6 +60,7 @@ userSchema.statics.hashPassword = function (plain) {
 };
 
 userSchema.methods.comparePassword = function (plain) {
+  if (!this.passwordHash) return Promise.resolve(false);
   return bcrypt.compare(plain, this.passwordHash);
 };
 

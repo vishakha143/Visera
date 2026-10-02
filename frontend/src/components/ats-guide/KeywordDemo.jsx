@@ -3,12 +3,7 @@ import { Check, X } from "lucide-react";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
-import {
-  keywordDemoJobDescription,
-  keywordDemoResume,
-  keywordDemoTerms,
-  keywordDemoOptions,
-} from "@/data/atsGuideContent";
+import { keywordDemoTerms, keywordDemoOptions } from "@/data/atsGuideContent";
 
 export function KeywordDemo({ onInteract }) {
   const [selectedTerm, setSelectedTerm] = useState(null);
@@ -26,21 +21,25 @@ export function KeywordDemo({ onInteract }) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-      <Card padding="sm">
-        <CardTitle className="text-sm mb-3">Job Description</CardTitle>
-        <pre className="text-xs whitespace-pre-wrap font-sans text-[var(--color-ink-muted)] leading-relaxed">
-          {keywordDemoJobDescription}
-        </pre>
-      </Card>
-      <Card padding="sm">
-        <CardTitle className="text-sm mb-3">Example Resume</CardTitle>
-        <pre className="text-xs whitespace-pre-wrap font-sans text-[var(--color-ink-muted)] leading-relaxed">
-          {keywordDemoResume}
-        </pre>
+      <Card padding="sm" className="bg-[var(--color-ink)] border-transparent">
+        <CardTitle className="text-sm mb-3 text-[var(--color-bg)]">Frontend Developer</CardTitle>
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-white/50 mb-2">
+          Requirements
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {keywordDemoTerms.map((t) => (
+            <span
+              key={t.id}
+              className="px-2.5 py-1 rounded-full text-xs font-medium bg-white/10 text-white/90"
+            >
+              {t.label}
+            </span>
+          ))}
+        </div>
       </Card>
 
-      <Card padding="sm" className="md:col-span-2">
-        <CardTitle className="text-sm mb-3">Terminology Match</CardTitle>
+      <Card padding="sm">
+        <CardTitle className="text-sm mb-3">Your Resume</CardTitle>
         <ul className="space-y-1.5">
           {keywordDemoTerms.map((t) => (
             <li key={t.id}>
@@ -58,7 +57,9 @@ export function KeywordDemo({ onInteract }) {
                 <span
                   className={cn(
                     "inline-flex items-center gap-1 text-xs font-medium",
-                    t.status === "present" ? "text-[var(--color-success)]" : "text-[var(--color-warning)]"
+                    t.status === "present"
+                      ? "text-green-600 dark:text-green-400"
+                      : "text-[var(--color-warning)]"
                   )}
                 >
                   {t.status === "present" ? <Check size={13} /> : <X size={13} />}
@@ -68,35 +69,35 @@ export function KeywordDemo({ onInteract }) {
             </li>
           ))}
         </ul>
-
-        {selectedTerm && (
-          <div className="mt-5 pt-5 border-t border-[var(--color-border)]">
-            <p className="text-sm font-medium mb-3">
-              {missingTerm.label} is missing from the resume. Do you genuinely have this skill?
-            </p>
-            <div className="flex flex-wrap gap-2 mb-4">
-              {keywordDemoOptions.map((opt) => (
-                <Button
-                  key={opt.id}
-                  size="sm"
-                  variant={answer === opt.id ? "accent" : "outline"}
-                  onClick={() => {
-                    setAnswer(opt.id);
-                    onInteract?.();
-                  }}
-                >
-                  {opt.label}
-                </Button>
-              ))}
-            </div>
-            {guidance && (
-              <p className="text-sm text-[var(--color-ink-muted)] leading-relaxed bg-[var(--color-surface-2)] rounded-xl p-3.5">
-                {guidance}
-              </p>
-            )}
-          </div>
-        )}
       </Card>
+
+      {selectedTerm && (
+        <Card padding="sm" className="md:col-span-2">
+          <p className="text-sm font-medium mb-3">
+            {missingTerm.label} is missing from the resume. Do you genuinely have this skill?
+          </p>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {keywordDemoOptions.map((opt) => (
+              <Button
+                key={opt.id}
+                size="sm"
+                variant={answer === opt.id ? "accent" : "outline"}
+                onClick={() => {
+                  setAnswer(opt.id);
+                  onInteract?.();
+                }}
+              >
+                {opt.label}
+              </Button>
+            ))}
+          </div>
+          {guidance && (
+            <p className="text-sm text-[var(--color-ink-muted)] leading-relaxed bg-[var(--color-surface-2)] rounded-xl p-3.5">
+              {guidance}
+            </p>
+          )}
+        </Card>
+      )}
     </div>
   );
 }

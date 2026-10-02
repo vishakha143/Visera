@@ -14,6 +14,8 @@ const dashboardRouter = require("./routes/dashboard");
 const insightsRouter = require("./routes/insights");
 const versionRouter = require("./routes/versions");
 const historyRouter = require("./routes/history");
+const jobMatchesRouter = require("./routes/jobMatches");
+const applicationsRouter = require("./routes/applications");
 
 const app = express();
 
@@ -41,6 +43,8 @@ app.use("/api/dashboard",dashboardRouter);
 app.use("/api/insights",insightsRouter);
 app.use("/api/versions", versionRouter);
 app.use("/api/history", historyRouter);
+app.use("/api/job-matches", jobMatchesRouter);
+app.use("/api/applications", applicationsRouter);
 
 app.use(notFound);
 app.use(errorHandler);

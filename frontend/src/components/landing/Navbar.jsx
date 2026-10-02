@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Menu, X, ArrowRight } from "lucide-react";
+import { Menu, X, ArrowRight, Sun, Moon, Search } from "lucide-react";
 import AILogo from "@/components/layout/AILogo";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/context/ThemeContext";
 
 const NAV_LINKS = [
   { label: "Features", href: "#features" },
@@ -16,6 +17,15 @@ const NAV_LINKS = [
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
+  const location = useLocation();
+  const isAtsGuide = location.pathname === "/ats-guide";
+
+  function focusGuideSearch() {
+    const input = document.getElementById("ats-guide-search-input");
+    input?.scrollIntoView({ behavior: "smooth", block: "center" });
+    input?.focus();
+  }
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -40,18 +50,18 @@ export function Navbar() {
             : "bg-[var(--surface)]/95 border-transparent backdrop-blur-md",
         )}
       >
-        <div className="flex items-center justify-between gap-4 px-3 sm:px-4 py-2">
-          <Link to="/" className="flex items-center gap-2.5 pl-1">
+        <div className="flex items-center justify-between gap-2 px-3 sm:px-4 py-2">
+          <Link to="/" className="flex items-center gap-2.5 pl-1 shrink-0">
             <AILogo />
             <span className="font-display text-[15px] font-semibold tracking-tight text-[var(--ink)] hidden sm:inline">
               VISERA
             </span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
+          <nav className="hidden lg:flex items-center gap-1 flex-1 justify-center min-w-0 overflow-hidden">
             {NAV_LINKS.map((l) => {
               const className =
-                "px-3.5 py-1.5 rounded-full text-[13px] font-medium text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-2)] transition-colors";
+                "px-3.5 py-1.5 rounded-full text-[13px] font-medium text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-2)] transition-colors whitespace-nowrap";
               return l.href.startsWith("#") ? (
                 <a key={l.href} href={l.href} className={className}>
                   {l.label}
@@ -64,7 +74,27 @@ export function Navbar() {
             })}
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
+            {isAtsGuide && (
+              <button
+                type="button"
+                onClick={focusGuideSearch}
+                aria-label="Search ATS Guide"
+                title="Search ATS Guide"
+                className="h-9 w-9 rounded-full flex items-center justify-center text-[var(--ink)] hover:bg-[var(--surface-2)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40"
+              >
+                <Search size={16} />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+              title="Toggle theme"
+              className="h-9 w-9 rounded-full flex items-center justify-center text-[var(--ink)] hover:bg-[var(--surface-2)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40"
+            >
+              {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
+            </button>
             <Link
               to="/login"
               className="hidden sm:inline-flex h-9 px-4 rounded-full text-[13px] font-medium text-[var(--ink)] hover:bg-[var(--surface-2)] items-center transition-colors"
@@ -83,7 +113,7 @@ export function Navbar() {
             </Link>
             <button
               onClick={() => setOpen((o) => !o)}
-              className="md:hidden h-9 w-9 rounded-full flex items-center justify-center text-[var(--ink)] hover:bg-[var(--surface-2)]"
+              className="lg:hidden h-9 w-9 rounded-full flex items-center justify-center text-[var(--ink)] hover:bg-[var(--surface-2)]"
               aria-label="Toggle menu"
             >
               {open ? <X size={16} /> : <Menu size={16} />}
@@ -95,7 +125,7 @@ export function Navbar() {
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
-            className="md:hidden border-t border-[var(--border)] px-3 py-3 space-y-1"
+            className="lg:hidden border-t border-[var(--border)] px-3 py-3 space-y-1"
           >
             {NAV_LINKS.map((l) => {
               const className =

@@ -2,21 +2,22 @@
 // Kept separate from JSX so it stays easy to edit, search, and link into a TOC.
 
 export const atsGuideTOC = [
-  { id: "what-is-ats", label: "What is an ATS?" },
-  { id: "processing", label: "How ATS Processing Works" },
-  { id: "dimensions", label: "More Than Keywords" },
-  { id: "checklist", label: "ATS Checklist" },
-  { id: "resume-length", label: "One Page Mandatory?" },
-  { id: "fonts", label: "ATS-Approved Font?" },
-  { id: "keywords", label: "Keywords" },
-  { id: "freshers", label: "Fresher Mode" },
-  { id: "projects", label: "Projects as Evidence" },
-  { id: "formatting", label: "Formatting Safety" },
-  { id: "section-headings", label: "Section Headings" },
-  { id: "file-formats", label: "File Formats" },
-  { id: "myths", label: "ATS Myths" },
-  { id: "why-flagged", label: "Why Visera Flagged This" },
-  { id: "your-knowledge", label: "Your ATS Knowledge" },
+  { id: "what-is-ats", label: "What is an ATS?", group: "Understand ATS" },
+  { id: "processing", label: "How it works", group: "Understand ATS" },
+  { id: "dimensions", label: "What ATS may look for", group: "Understand ATS" },
+  { id: "status-system", label: "Recommendation status", group: "Understand ATS" },
+  { id: "checklist", label: "ATS checklist", group: "Optimize Your Resume" },
+  { id: "resume-length", label: "One page mandatory?", group: "Optimize Your Resume" },
+  { id: "fonts", label: "ATS-approved font?", group: "Optimize Your Resume" },
+  { id: "keywords", label: "Keywords", group: "Optimize Your Resume" },
+  { id: "formatting", label: "Formatting safety", group: "Optimize Your Resume" },
+  { id: "section-headings", label: "Section headings", group: "Optimize Your Resume" },
+  { id: "file-formats", label: "File formats", group: "Optimize Your Resume" },
+  { id: "myths", label: "ATS myths", group: "Optimize Your Resume" },
+  { id: "freshers", label: "No internship?", group: "For Freshers" },
+  { id: "projects", label: "Projects as evidence", group: "For Freshers" },
+  { id: "why-flagged", label: "Why Visera flagged this", group: "Visera" },
+  { id: "your-knowledge", label: "Your progress", group: "Visera" },
 ];
 
 export const atsProcessSteps = [
@@ -31,24 +32,30 @@ export const atsProcessSteps = [
     title: "Document read / parsed",
     detail:
       "The system may attempt to read the document and identify name, contact details, education, experience, skills, projects, dates, job titles, and organizations. How well this works can vary between systems.",
+    why: "If key details can't be reliably read, they may not make it into the fields a recruiter searches or filters by — regardless of how strong the actual content is.",
+    viseraChecks: "Visera parses your resume the same way and shows you what it was able to extract, so you can see anything that looks off before an employer would.",
   },
   {
     id: "structuring",
     title: "Information organized",
     detail:
       "Recognized content can be mapped into structured fields or kept as searchable text, depending on the platform.",
+    why: "Clear structure makes it more likely your experience lands in the right field instead of being lost as unstructured text.",
   },
   {
     id: "matching",
     title: "Search / filtering / matching",
     detail:
       "Depending on the employer's system and workflow, information can be searched, filtered, or compared against job requirements.",
+    why: "This is where terminology and completeness matter most — but it's one input among several, not the whole decision.",
+    viseraChecks: "Visera compares your resume's terminology against a target job description and shows what's present, partial, or missing — never as a pass/fail verdict.",
   },
   {
     id: "review",
     title: "Recruiter workflow",
     detail:
       "Recruiters and hiring teams review candidates and ultimately make hiring decisions — the ATS supports the workflow, it doesn't replace it.",
+    why: "No matter how a resume moves through a system, a human still makes the final call — which is why writing for people still matters.",
   },
 ];
 
@@ -60,6 +67,7 @@ export const atsDimensions = [
     summary:
       "Relevant terminology from a job description can improve discoverability when it truthfully reflects your experience.",
     why: "Some systems and recruiters search or filter by terminology. Matching relevant, truthful terms can make your experience easier to find — but keywords alone don't make a resume strong.",
+    viseraChecks: "Compares your resume's terminology against a target job description and shows present / partial / missing.",
   },
   {
     id: "structure",
@@ -67,6 +75,7 @@ export const atsDimensions = [
     status: "recommended",
     summary: "Clear sections with a predictable reading order are easier to parse and easier to skim.",
     why: "Predictable structure reduces ambiguity for both software and human readers.",
+    viseraChecks: "Looks for standard section boundaries and a predictable top-to-bottom reading order.",
   },
   {
     id: "formatting",
@@ -74,6 +83,7 @@ export const atsDimensions = [
     status: "context",
     summary: "Clean, consistent formatting supports readability. Overly complex layouts can create risk.",
     why: "Some layouts (heavy tables, text boxes, multi-column designs) can be read in an unexpected order by certain systems.",
+    viseraChecks: "Flags layout patterns that can create parsing ambiguity — never a hard failure, always contextual.",
   },
   {
     id: "skills",
@@ -237,22 +247,6 @@ export const atsMyths = [
   },
 ];
 
-export const keywordDemoJobDescription = `Frontend Developer
-
-Requirements:
-React
-JavaScript
-REST APIs
-Git
-Responsive UI
-TypeScript`;
-
-export const keywordDemoResume = `Frontend Developer
-
-Built responsive interfaces using React and JavaScript.
-Integrated REST APIs.
-Used Git for version control.`;
-
 export const keywordDemoTerms = [
   { id: "react", label: "React", status: "present" },
   { id: "javascript", label: "JavaScript", status: "present" },
@@ -307,6 +301,27 @@ export const fresherStructure = [
   "Additional Relevant Information",
 ];
 
+// General resume-structure guidance for experienced candidates — not an ATS
+// claim, just standard practice, kept in the same tone as the fresher content.
+export const experiencedEvidence = [
+  "Professional experience",
+  "Quantified achievements",
+  "Leadership",
+  "Promotions",
+  "Certifications",
+  "Technical depth",
+];
+
+export const experiencedStructure = [
+  "Name + Contact",
+  "Summary",
+  "Professional Experience",
+  "Skills",
+  "Selected Projects",
+  "Education",
+  "Certifications",
+];
+
 export const projectEvidenceLevels = [
   {
     level: "Weak",
@@ -354,11 +369,32 @@ export const formattingExplorer = [
 
 export const sectionHeadings = {
   recommended: ["Summary", "Education", "Experience", "Projects", "Skills", "Certifications", "Achievements"],
+  lessEffective: ["My Journey", "What I Bring", "My Toolkit", "Where I've Worked", "My Academic Story"],
   example: {
     creative: "Technical Arsenal",
     standard: "Skills",
   },
 };
+
+export const fontPreviewOptions = [
+  { id: "arial", label: "Arial", family: "Arial, sans-serif" },
+  { id: "calibri", label: "Calibri", family: "Calibri, Carlito, sans-serif" },
+  { id: "helvetica", label: "Helvetica", family: "Helvetica, Arial, sans-serif" },
+  { id: "georgia", label: "Georgia", family: "Georgia, serif" },
+  { id: "times", label: "Times New Roman", family: "'Times New Roman', Times, serif" },
+];
+
+export const fontPreviewSample = {
+  name: "Priya Sharma",
+  title: "Frontend Engineer",
+  bullet: "Built responsive interfaces used by thousands of visitors, working closely with design and backend teams.",
+};
+
+export const fileFormatDecisions = [
+  { condition: "Employer specifies PDF", recommendation: "Use PDF" },
+  { condition: "Employer specifies DOCX", recommendation: "Use DOCX" },
+  { condition: "No format specified", recommendation: "Use a clean, widely supported format" },
+];
 
 export const fileFormats = [
   {

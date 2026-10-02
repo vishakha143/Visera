@@ -12,6 +12,12 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    // Firebase's signInWithPopup needs to poll window.closed on the popup
+    // it opens; a strict COOP header blocks that check and the sign-in
+    // promise never resolves. Allow popups from this origin explicitly.
+    headers: {
+      "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
+    },
     proxy: {
       "/api": {
         target: "http://localhost:5000",

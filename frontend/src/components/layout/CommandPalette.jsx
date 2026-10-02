@@ -10,6 +10,9 @@ import {
   History,
   Settings as SettingsIcon,
   CornerDownLeft,
+  Target,
+  Briefcase,
+  BookOpen,
 } from "lucide-react";
 import { cn, relativeTime } from "@/lib/utils";
 import { useResumesList } from "@/hooks/useResumes";
@@ -17,9 +20,12 @@ import { useResumesList } from "@/hooks/useResumes";
 const NAV_ITEMS = [
   { id: "nav:dashboard", kind: "nav", label: "Dashboard", hint: "Overview", to: "/dashboard", icon: LayoutGrid },
   { id: "nav:resumes", kind: "nav", label: "Resumes", hint: "Browse & upload", to: "/resumes", icon: FileText },
+  { id: "nav:job-matcher", kind: "nav", label: "Job Matcher", hint: "Match a resume to a JD", to: "/job-matcher", icon: Target },
+  { id: "nav:applications", kind: "nav", label: "Applications", hint: "Track applications", to: "/applications", icon: Briefcase },
   { id: "nav:insights", kind: "nav", label: "Insights", hint: "Score trends", to: "/insights", icon: BarChart3 },
   { id: "nav:versions", kind: "nav", label: "Versions", hint: "Compare V1 / V2 / V3", to: "/versions", icon: Layers },
   { id: "nav:history", kind: "nav", label: "History", hint: "Past analyses", to: "/history", icon: History },
+  { id: "nav:ats-guide", kind: "nav", label: "ATS Guide", hint: "Learn how ATS works", to: "/ats-guide", icon: BookOpen },
   { id: "nav:settings", kind: "nav", label: "Settings", hint: "Profile, appearance, password", to: "/settings", icon: SettingsIcon },
 ];
 

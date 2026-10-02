@@ -123,6 +123,14 @@ router.get(
             .slice(-10)
             .map((a) => ({ v: (a.issues || []).length }));
 
+        const SEVERITY_RANK = { high: 0, medium: 1, low: 2 };
+        const topIssues = latestAnalysis
+            ? [...(latestAnalysis.issues || [])]
+                .sort((a, b) => (SEVERITY_RANK[a.severity] ?? 3) - (SEVERITY_RANK[b.severity] ?? 3))
+                .slice(0, 3)
+                .map((i) => ({ title: i.title, severity: i.severity }))
+            : [];
+
         const kpi = {
             atsScore: {
                 value: latestAnalysis?.atsScore ?? null,
@@ -240,6 +248,7 @@ router.get(
             latestResume,
             scoreSeries,
             versionStack,
+            topIssues,
             kpi,
             activity,
         });

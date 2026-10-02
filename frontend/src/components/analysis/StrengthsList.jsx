@@ -1,5 +1,6 @@
 import { CheckCircle2 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 
 export function StrengthsList({ strengths = [] }) {
   if (strengths.length === 0) {
@@ -28,7 +29,14 @@ export function StrengthsList({ strengths = [] }) {
               <CheckCircle2 size={15} />
             </div>
             <div>
-              <div className="text-sm font-medium">{s.title}</div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-medium">{s.title}</span>
+                {s.source === "rule" && (
+                  <Badge tone="neutral" title="Detected by a fixed rule, not AI judgment">
+                    rule-based
+                  </Badge>
+                )}
+              </div>
               <p className="text-xs text-[var(--color-ink-muted)] mt-0.5">
                 {s.note}
               </p>

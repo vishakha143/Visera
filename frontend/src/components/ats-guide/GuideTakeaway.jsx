@@ -1,20 +1,21 @@
-import { Card, CardTitle } from "@/components/ui/Card";
-import { GuidelineStatus } from "./GuidelineStatus";
+import { Lightbulb } from "lucide-react";
 
-export function GuideTakeaway({ title = "Key takeaway", text, status, action }) {
+// Full-width inline banner rendered under a section's content — matches the
+// approved ATS Guide design (amber callout, not a sidebar card).
+export function GuideTakeaway({ title = "Key takeaway", text, action }) {
   if (!text) return null;
   return (
-    <Card className="sticky top-24">
-      <CardTitle className="text-sm text-[var(--color-ink-muted)] font-medium mb-2">
-        {title}
-      </CardTitle>
-      <p className="text-sm leading-relaxed">{text}</p>
-      {status && (
-        <div className="mt-3">
-          <GuidelineStatus status={status} />
+    <div className="rounded-2xl bg-[var(--color-accent-soft)] px-5 py-4">
+      <div className="flex items-start gap-2.5">
+        <Lightbulb size={15} className="text-[var(--color-accent-strong)] mt-0.5 shrink-0" aria-hidden="true" />
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-accent-strong)] mb-1">
+            {title}
+          </p>
+          <p className="text-sm leading-relaxed text-[var(--color-ink)]">{text}</p>
         </div>
-      )}
+      </div>
       {action}
-    </Card>
+    </div>
   );
 }

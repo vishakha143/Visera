@@ -82,7 +82,7 @@ export function ResumeDocument({ resume, version }) {
         <Text style={styles.name}>{basics.name || "Candidate"}</Text>
         {basics.title && <Text style={styles.title}>{basics.title}</Text>}
         <Text style={styles.meta}>
-          {[basics.email, basics.location].filter(Boolean).join("  ·  ")}
+          {[basics.email, basics.phone, basics.location].filter(Boolean).join("  ·  ")}
         </Text>
 
         {/* Summary */}

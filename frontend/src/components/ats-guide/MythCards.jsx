@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
 import { atsMyths } from "@/data/atsGuideContent";
 
@@ -8,11 +7,11 @@ export function MythCards({ onOpen }) {
   const [openId, setOpenId] = useState(null);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div className="rounded-2xl border border-[var(--color-border)] overflow-hidden divide-y divide-[var(--color-border)]">
       {atsMyths.map((m) => {
         const open = openId === m.id;
         return (
-          <Card key={m.id} padding="sm">
+          <div key={m.id} className="bg-[var(--color-surface)]">
             <button
               onClick={() => {
                 const next = open ? null : m.id;
@@ -20,30 +19,23 @@ export function MythCards({ onOpen }) {
                 if (next) onOpen?.(m.id);
               }}
               aria-expanded={open}
-              className="w-full text-left"
+              className="w-full flex items-center justify-between gap-3 text-left px-4 py-3.5 hover:bg-[var(--color-surface-2)] transition-colors"
             >
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-ink-muted)]">
-                    Myth
-                  </span>
-                  <p className="text-sm font-medium mt-1">{m.myth}</p>
-                </div>
-                <ChevronDown
-                  size={16}
-                  className={cn("text-[var(--color-ink-muted)] shrink-0 transition-transform mt-0.5", open && "rotate-180")}
-                />
-              </div>
+              <span className="text-sm font-medium">"{m.myth}"</span>
+              <ChevronDown
+                size={16}
+                className={cn("text-[var(--color-ink-muted)] shrink-0 transition-transform", open && "rotate-180")}
+              />
             </button>
             {open && (
-              <div className="mt-3 pt-3 border-t border-[var(--color-border)]">
-                <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-success)]">
+              <div className="px-4 pb-4">
+                <span className="text-xs font-semibold uppercase tracking-wide text-green-700 dark:text-green-400">
                   Reality
                 </span>
                 <p className="text-sm mt-1 leading-relaxed text-[var(--color-ink-muted)]">{m.reality}</p>
               </div>
             )}
-          </Card>
+          </div>
         );
       })}
     </div>

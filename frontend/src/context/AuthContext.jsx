@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import apiClient from "@/api/client";
+import { signInWithGoogle, signInWithGithub } from "@/lib/firebase";
 
 const AuthContext = createContext(null);
 
@@ -29,6 +30,7 @@ export function AuthProvider({ children }) {
       _id: userData._id || userData.id,
       name: userData.name,
       email: userData.email,
+      avatarUrl: userData.avatarUrl || "",
       token,
     };
     localStorage.setItem("auth_user", JSON.stringify(payload));
@@ -65,6 +67,23 @@ export function AuthProvider({ children }) {
     return persist(data.user, data.token);
   }
 
+  async function continueWithFirebase(getIdToken) {
+    const idToken = await getIdToken();
+    const { data } = await apiClient.post("/auth/firebase", { idToken });
+    if (!data?.token) {
+      throw new Error("Sign-in succeeded but no session was returned from server");
+    }
+    return persist(data.user, data.token);
+  }
+
+  function loginWithGoogle() {
+    return continueWithFirebase(signInWithGoogle);
+  }
+
+  function loginWithGithub() {
+    return continueWithFirebase(signInWithGithub);
+  }
+
   async function logout() {
     try {
       await apiClient.post("/auth/logout");
@@ -80,6 +99,8 @@ export function AuthProvider({ children }) {
     loading,
     login,
     register,
+    loginWithGoogle,
+    loginWithGithub,
     logout,
     updateUser,
     isAuthenticated: !!user?.token,

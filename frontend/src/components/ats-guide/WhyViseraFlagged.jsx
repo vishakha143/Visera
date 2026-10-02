@@ -1,8 +1,42 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { AlertTriangle } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { scrollToGuideSection } from "@/lib/atsGuide";
+import { keywordDemoOptions } from "@/data/atsGuideContent";
+
+function FlagActionPicker({ keyword }) {
+  const [answer, setAnswer] = useState(null);
+  const guidance = answer ? keywordDemoOptions.find((o) => o.id === answer)?.guidance : null;
+
+  return (
+    <div className="mt-2.5">
+      <p className="text-xs font-medium mb-1.5">Do you genuinely have this skill?</p>
+      <div className="flex flex-wrap gap-1.5">
+        {keywordDemoOptions.map((opt) => (
+          <button
+            key={opt.id}
+            onClick={() => setAnswer(opt.id)}
+            aria-pressed={answer === opt.id}
+            className={
+              answer === opt.id
+                ? "px-2.5 py-1 rounded-full text-xs font-medium bg-[var(--color-ink)] text-[var(--color-bg)]"
+                : "px-2.5 py-1 rounded-full text-xs font-medium border border-[var(--color-border)] text-[var(--color-ink-muted)] hover:bg-[var(--color-surface-2)]"
+            }
+          >
+            {opt.label.replace("TypeScript", keyword)}
+          </button>
+        ))}
+      </div>
+      {guidance && (
+        <p className="text-xs text-[var(--color-ink-muted)] mt-2 leading-relaxed bg-[var(--color-surface-2)] rounded-lg p-2.5">
+          {guidance}
+        </p>
+      )}
+    </div>
+  );
+}
 
 // Bridges education to the user's actual Visera analysis. Content comes
 // entirely from the real analysis object — nothing here is invented.
@@ -83,17 +117,17 @@ export function WhyViseraFlagged({ loading, failed, hasResume, hasAnalysis, flag
               <p className="text-xs text-[var(--color-ink-muted)] mt-1 leading-relaxed">
                 {flag.reason}
               </p>
-              {flag.type === "missing_keyword" && (
-                <p className="text-xs text-[var(--color-ink-muted)] mt-1.5">
-                  Should you add it? Only if you genuinely have relevant experience or learning.
-                </p>
+
+              {flag.type === "missing_keyword" ? (
+                <FlagActionPicker keyword={flag.keyword} />
+              ) : (
+                <button
+                  onClick={() => scrollToGuideSection(flag.guideSection)}
+                  className="mt-2 text-xs font-medium text-[var(--color-accent-strong)]"
+                >
+                  Learn more →
+                </button>
               )}
-              <button
-                onClick={() => scrollToGuideSection(flag.guideSection)}
-                className="mt-2 text-xs font-medium text-[var(--color-accent-strong)]"
-              >
-                Learn more →
-              </button>
             </div>
           </div>
         </Card>

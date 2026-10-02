@@ -11,6 +11,11 @@ export const resumesApi = {
       .get(`/resumes/${id}/versions/${versionId}`)
       .then((r) => r.data),
 
+  saveVersion: (id, versionId, parsedSections) =>
+    apiClient
+      .patch(`/resumes/${id}/versions/${versionId}`, parsedSections)
+      .then((r) => r.data),
+
   upload: (file, title) => {
     const fd = new FormData();
     fd.append("file", file);
@@ -52,4 +57,15 @@ export const resumesApi = {
         params: { from, to, mode },
       })
       .then((r) => r.data),
+
+  verifyExport: (id, versionId, pdfBlob) => {
+    const fd = new FormData();
+    fd.append("file", pdfBlob, "export.pdf");
+
+    return apiClient
+      .post(`/resumes/${id}/versions/${versionId}/verify-export`, fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then((r) => r.data);
+  },
 };

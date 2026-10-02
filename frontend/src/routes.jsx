@@ -1,5 +1,4 @@
 import { Navigate, createBrowserRouter } from "react-router-dom";
-import { Placeholder } from "@/pages/Placeholder";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import { useAuth } from "@/context/AuthContext";
@@ -7,6 +6,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import Dashboard from "@/pages/Dashboard";
 import Resumes from "@/pages/Resumes";
 import ResumeDetail from "@/pages/ResumeDetail";
+import Studio from "@/pages/Studio";
 import Settings from "@/pages/Settings";
 import Insights from "@/pages/Insights";
 import History from "@/pages/History";
@@ -14,6 +14,8 @@ import Versions from "@/pages/Versions";
 import Landing from "@/pages/Landing";
 import ATSGuide from "@/pages/ATSGuide";
 import ExportPage from "@/pages/Export";
+import JobMatcher from "@/pages/JobMatcher";
+import Applications from "@/pages/Applications";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
 
@@ -53,7 +55,10 @@ export const router = createBrowserRouter([
       { path: "dashboard", element: <Dashboard /> },
       { path: "resumes", element: <Resumes /> },
       { path: "resumes/:id", element: <ResumeDetail /> },
+      { path: "resumes/:id/studio", element: <Studio /> },
       { path: "resumes/:id/export", element: <ExportPage /> },
+      { path: "job-matcher", element: <JobMatcher /> },
+      { path: "applications", element: <Applications /> },
       { path: "insights", element: <Insights /> },
       { path: "versions", element: <Versions /> },
       { path: "history", element: <History /> },

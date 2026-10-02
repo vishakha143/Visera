@@ -1,12 +1,9 @@
-const { GoogleGenerativeAI, SchemaType } = require("@google/generative-ai");
+const { SchemaType } = require("@google/generative-ai");
 const { z } = require("zod");
 
-const env = require("../config/env");
 const ApiError = require("../utils/ApiError");
-
-const genAI = env.geminiApiKey
-  ? new GoogleGenerativeAI(env.geminiApiKey)
-  : null;
+const { runDeterministicChecks } = require("./deterministicChecks");
+const { isConfigured, callGeminiJSON, withRetry } = require("./geminiClient");
 
 /* -------------------------------------------------------------------------- */
 /* Gemini response schema                                                      */
@@ -31,7 +28,7 @@ const responseSchema = {
     },
     issues: {
       type: SchemaType.ARRAY,
-      description: "Exactly 5 prioritized issues",
+      description: "Up to 5 prioritized issues requiring judgment (not already-flagged programmatic facts)",
       items: {
         type: SchemaType.OBJECT,
         properties: {
@@ -49,7 +46,7 @@ const responseSchema = {
     },
     strengths: {
       type: SchemaType.ARRAY,
-      description: "Exactly 5 strengths",
+      description: "Up to 5 standout strengths requiring judgment (not already-flagged programmatic facts)",
       items: {
         type: SchemaType.OBJECT,
         properties: {
@@ -119,7 +116,7 @@ const analysisValidator = z.object({
         fix: z.string(),
       })
     )
-    .min(1),
+    .default([]),
   strengths: z
     .array(
       z.object({
@@ -127,7 +124,7 @@ const analysisValidator = z.object({
         evidence: z.string(),
       })
     )
-    .min(1),
+    .default([]),
   bulletRewrites: z
     .array(
       z.object({
@@ -147,7 +144,12 @@ const analysisValidator = z.object({
 /* Prompt                                                                      */
 /* -------------------------------------------------------------------------- */
 
-function buildPrompt(rawText, targetRole) {
+function buildPrompt(rawText, targetRole, deterministic) {
+  const ruleFindingTitles = [
+    ...deterministic.issues.map((i) => i.title),
+    ...deterministic.strengths.map((s) => s.title),
+  ];
+
   return [
     "You are a senior technical recruiter and ATS expert reviewing a resume.",
     targetRole
@@ -155,10 +157,18 @@ function buildPrompt(rawText, targetRole) {
       : "No specific target role was provided — assess for the role the candidate appears to be aiming for.",
     "",
     "Score the resume from 0-100 based on ATS readiness (keyword match, parseable formatting, quantified impact, clarity).",
-    "Return exactly 5 prioritized issues, 5 standout strengths, and 5-10 weak bullets rewritten to be stronger, quantified, and ATS-friendly.",
+    "Return up to 5 prioritized issues and up to 5 standout strengths, and 5-10 weak bullets rewritten to be stronger, quantified, and ATS-friendly.",
     "Rewrites must preserve the original meaning. Each rewrite needs a one-line rationale.",
     "Identify keywords clearly present and notable keywords missing for the apparent target role.",
     "Be specific and evidence-based — cite phrasing from the resume in explanations.",
+    "",
+    "The following facts were already established programmatically (word count, contact info, section presence, quantified-bullet ratio). Do NOT restate these as your own issues or strengths — focus your judgment on things that require actual reading comprehension: writing quality, bullet impact, clarity, and how well the content matches the target role.",
+    `- Word count: ${deterministic.stats.wordCount}`,
+    `- Experience entries: ${deterministic.stats.experienceCount}, Education entries: ${deterministic.stats.educationCount}, Skills listed: ${deterministic.stats.skillsCount}`,
+    `- ${deterministic.stats.quantifiedBullets} of ${deterministic.stats.totalBullets} bullets contain a measurable number`,
+    ruleFindingTitles.length
+      ? `- Already flagged programmatically: ${ruleFindingTitles.join("; ")}`
+      : "- No programmatic issues or strengths were flagged",
     "",
     "RESUME TEXT:",
     "===========",
@@ -168,41 +178,11 @@ function buildPrompt(rawText, targetRole) {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Gemini call (same SDK style as your working structureParser)                */
-/* -------------------------------------------------------------------------- */
-
-async function callGemini(prompt) {
-  const model = genAI.getGenerativeModel({
-    model: env.geminiModel || "gemini-3.6-flash",
-    generationConfig: {
-      temperature: 0.4,
-      responseMimeType: "application/json",
-      responseSchema,
-    },
-  });
-
-  const result = await model.generateContent(prompt);
-  const text = result.response.text();
-
-  if (!text) throw new Error("Empty response from Gemini");
-
-  const usage = result.response.usageMetadata || {};
-
-  return {
-    text,
-    usage: {
-      promptTokenCount: usage.promptTokenCount,
-      candidatesTokenCount: usage.candidatesTokenCount,
-    },
-  };
-}
-
-/* -------------------------------------------------------------------------- */
 /* Public API                                                                  */
 /* -------------------------------------------------------------------------- */
 
-async function analyzeResume(rawText, targetRole) {
-  if (!genAI) {
+async function analyzeResume(rawText, targetRole, parsedSections) {
+  if (!isConfigured()) {
     throw ApiError.internal("GEMINI_API_KEY is not configured on the server.");
   }
 
@@ -210,30 +190,41 @@ async function analyzeResume(rawText, targetRole) {
     throw ApiError.badRequest("Resume text is required for analysis.");
   }
 
-  const prompt = buildPrompt(rawText, targetRole);
-  let lastErr;
+  const deterministic = runDeterministicChecks(rawText, parsedSections);
+  const prompt = buildPrompt(rawText, targetRole, deterministic);
 
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    try {
-      const { text, usage } = await callGemini(prompt);
+  try {
+    const { validated, model, usage } = await withRetry(async () => {
+      const { text, model, usage } = await callGeminiJSON({
+        prompt,
+        responseSchema,
+        temperature: 0.4,
+      });
       const parsed = JSON.parse(text);
-      const validated = analysisValidator.parse(parsed);
+      return { validated: analysisValidator.parse(parsed), model, usage };
+    });
 
-      return {
-        analysis: validated,
-        model: env.geminiModel || "gemini-3.6-flash",
-        promptTokens: usage.promptTokenCount,
-        responseTokens: usage.candidatesTokenCount,
-      };
-    } catch (err) {
-      lastErr = err;
-      if (attempt === 2) break;
-    }
+    const merged = {
+      ...validated,
+      issues: [
+        ...deterministic.issues,
+        ...validated.issues.map((i) => ({ ...i, source: "ai" })),
+      ],
+      strengths: [
+        ...deterministic.strengths,
+        ...validated.strengths.map((s) => ({ ...s, source: "ai" })),
+      ],
+    };
+
+    return {
+      analysis: merged,
+      model,
+      promptTokens: usage.promptTokenCount,
+      responseTokens: usage.candidatesTokenCount,
+    };
+  } catch (err) {
+    throw ApiError.internal(`Gemini analysis failed: ${err?.message || "unknown error"}`);
   }
-
-  throw ApiError.internal(
-    `Gemini analysis failed: ${lastErr?.message || "unknown error"}`
-  );
 }
 
 module.exports = { analyzeResume };

@@ -7,11 +7,13 @@ import {
   AuthField,
   AuthPrimaryButton,
   AuthErrorBanner,
+  SocialAuthButtons,
+  AuthDivider,
 } from "@/components/auth/AuthShell";
 import { useAuth } from "@/context/AuthContext";
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, loginWithGoogle, loginWithGithub } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
@@ -29,6 +31,18 @@ export default function Login() {
       setError(err.message || "Login failed");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleSocial(fn) {
+    setError("");
+    try {
+      await fn();
+      navigate("/dashboard");
+    } catch (err) {
+      // User closed the popup or backed out — not an error worth alarming them with.
+      if (err?.cancelled) return;
+      setError(err.message || "Sign-in failed");
     }
   }
 
@@ -55,7 +69,15 @@ export default function Login() {
           Sign in to keep sharpening your resume.
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-9 space-y-4">
+        <div className="mt-9">
+          <SocialAuthButtons
+            onGoogle={() => handleSocial(loginWithGoogle)}
+            onGithub={() => handleSocial(loginWithGithub)}
+          />
+          <AuthDivider />
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
           <AuthField
             label="Email"
             type="email"
