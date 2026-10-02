@@ -21,6 +21,7 @@ import { Textarea } from "@/components/ui/Textarea";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Banner } from "@/components/ui/Banner";
+import { JobSearch } from "@/components/jobs/JobSearch";
 import { relativeTime } from "@/lib/utils";
 
 function ScoreRing({ score }) {
@@ -45,6 +46,7 @@ export default function JobMatcher() {
   const [company, setCompany] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [banner, setBanner] = useState(null);
+  const [mode, setMode] = useState("search");
   const [result, setResult] = useState(null);
 
   useEffect(() => {
@@ -130,6 +132,72 @@ export default function JobMatcher() {
     }
   }
 
+  const tabs = (
+    <div className="inline-flex items-center gap-1 bg-[var(--color-surface)] border border-[var(--color-border)] p-1 rounded-full shadow-card">
+      {[
+        ["search", "Find jobs"],
+        ["match", "Match a job description"],
+      ].map(([key, label]) => (
+        <button
+          key={key}
+          type="button"
+          onClick={() => setMode(key)}
+          className={`h-8 px-3.5 text-xs font-medium rounded-full transition-colors ${
+            mode === key
+              ? "bg-[var(--color-ink)] text-[var(--color-bg)]"
+              : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
+          }`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+
+  if (mode === "search") {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="font-display text-2xl md:text-3xl font-semibold tracking-tight">Job Matcher</h1>
+          <p className="text-[var(--color-ink-muted)] mt-1">
+            Search real job postings and see how well each one fits your resume.
+          </p>
+        </div>
+        {tabs}
+        {resumes.length === 0 && !resumesLoading ? (
+          <Card className="py-10 text-center text-sm text-[var(--color-ink-muted)]">
+            Upload a resume first so postings can be matched against it.
+          </Card>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-w-xl">
+              <select
+                value={resumeId}
+                onChange={(e) => setResumeId(e.target.value)}
+                className="h-10 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm"
+              >
+                {resumes.map((r) => (
+                  <option key={r._id} value={r._id}>{r.title}</option>
+                ))}
+              </select>
+              <select
+                value={versionId}
+                onChange={(e) => setVersionId(e.target.value)}
+                className="h-10 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm"
+                disabled={versions.length === 0}
+              >
+                {versions.map((v) => (
+                  <option key={v._id} value={v._id}>{v.label}</option>
+                ))}
+              </select>
+            </div>
+            <JobSearch resumeId={resumeId} versionId={versionId} />
+          </>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <div>
@@ -140,6 +208,7 @@ export default function JobMatcher() {
           Paste a job description and see how well a resume version matches it.
         </p>
       </div>
+      {tabs}
 
       <Banner {...banner} onDismiss={() => setBanner(null)} />
 

@@ -35,5 +35,8 @@ module.exports = {
   smtpUser: process.env.SMTP_USER || "",
   smtpPass: process.env.SMTP_PASS || "",
   emailFrom: process.env.EMAIL_FROM || process.env.SMTP_USER || "",
+  adzunaAppId: process.env.ADZUNA_APP_ID || "",
+  adzunaAppKey: process.env.ADZUNA_APP_KEY || "",
+  adzunaCountry: (process.env.ADZUNA_COUNTRY || "in").toLowerCase(),
   firebaseProjectId: process.env.FIREBASE_PROJECT_ID || "",
 };

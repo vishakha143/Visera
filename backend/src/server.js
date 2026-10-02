@@ -16,6 +16,7 @@ const versionRouter = require("./routes/versions");
 const historyRouter = require("./routes/history");
 const jobMatchesRouter = require("./routes/jobMatches");
 const applicationsRouter = require("./routes/applications");
+const jobsRouter = require("./routes/jobs");
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.use("/api/versions", versionRouter);
 app.use("/api/history", historyRouter);
 app.use("/api/job-matches", jobMatchesRouter);
 app.use("/api/applications", applicationsRouter);
+app.use("/api/jobs", jobsRouter);
 
 app.use(notFound);
 app.use(errorHandler);
