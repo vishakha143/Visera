@@ -13,6 +13,12 @@ const config = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID ?? import.meta.env.FIREBASE_APP_ID,
 };
 
+// Firebase's default authDomain is "<projectId>.firebaseapp.com", so a missing
+// project id can be recovered from it instead of disabling sign-in.
+if (!config.projectId && config.authDomain?.endsWith(".firebaseapp.com")) {
+  config.projectId = config.authDomain.replace(/\.firebaseapp\.com$/, "");
+}
+
 export const isFirebaseConfigured = Boolean(
   config.apiKey && config.authDomain && config.projectId && config.appId
 );
