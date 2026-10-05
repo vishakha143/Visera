@@ -3,7 +3,10 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "node:path";
 
+// FIREBASE_* is exposed too so Vercel keys named without the VITE_ prefix work.
+// Safe: Firebase web config is public by design; never put secrets under these prefixes.
 export default defineConfig({
+  envPrefix: ["VITE_", "FIREBASE_"],
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
