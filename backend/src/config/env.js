@@ -39,6 +39,7 @@ module.exports = {
   geminiModel: process.env.GEMINI_MODEL || "gemini-2.0-flash",
   isProd: process.env.NODE_ENV === "production",
   resendApiKey: process.env.RESEND_API_KEY || "",
+  brevoApiKey: process.env.BREVO_API_KEY || "",
   smtpHost: process.env.SMTP_HOST || "smtp.gmail.com",
   smtpPort: Number(process.env.SMTP_PORT) || 465,
   smtpUser: process.env.SMTP_USER || "",
