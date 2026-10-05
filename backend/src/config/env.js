@@ -14,8 +14,17 @@ const clientOrigins = (
   process.env.CLIENT_ORIGIN || "http://localhost:5173,http://localhost:5174"
 )
   .split(",")
-  .map((o) => o.trim())
-  .filter(Boolean);
+  .map((o) => o.trim().replace(/^["']|["']$/g, ""))
+  .filter(Boolean)
+  // Browsers send just "scheme://host[:port]" as Origin, so a trailing slash or
+  // a pasted full link (https://site.app/login) must be reduced to that form.
+  .map((o) => {
+    try {
+      return new URL(o).origin;
+    } catch {
+      return o;
+    }
+  });
 
 module.exports = {
   nodeEnv: process.env.NODE_ENV || "development",
