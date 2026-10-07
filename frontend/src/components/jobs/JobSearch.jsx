@@ -156,6 +156,7 @@ export function JobSearch({ resumeId, versionId }) {
         {sources.length > 0 && (
           <p className="text-xs text-[var(--color-ink-muted)] mb-4">
             Postings come from {sources.join(" and ")}. Open a result to apply on the employer&apos;s own page.
+            {sources.includes("Jooble") && " Results cover the whole country; a city only adds a small match bonus when the posting names it."}
             {sources.includes("Remotive") && " This free feed is mostly remote roles, so searches by city may return few results."}
           </p>
         )}

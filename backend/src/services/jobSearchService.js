@@ -67,13 +67,22 @@ async function getJson(url) {
 
 /* ------------------------------- Jooble ---------------------------------- */
 
+// Jooble's global endpoint resolves places only to country level: a bare city
+// ("Kolkata", "Bengaluru") returns nothing, while "<city>, India" or "India"
+// returns India-wide postings. So always anchor the search to the country.
+function joobleLocation(location) {
+  const country = env.joobleCountry;
+  if (!location) return country;
+  return location.toLowerCase().includes(country.toLowerCase()) ? location : `${location}, ${country}`;
+}
+
 async function searchJooble({ query, location, page }) {
   let res;
   try {
     res = await fetch(`https://jooble.org/api/${encodeURIComponent(env.joobleApiKey)}`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ keywords: query, location: location || "", page: String(page) }),
+      body: JSON.stringify({ keywords: query, location: joobleLocation(location), page: String(page) }),
       signal: AbortSignal.timeout(15000),
     });
   } catch {

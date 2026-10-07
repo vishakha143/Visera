@@ -49,6 +49,7 @@ module.exports = {
   smtpPass: process.env.SMTP_PASS || "",
   emailFrom: process.env.EMAIL_FROM || process.env.SMTP_USER || "",
   joobleApiKey: process.env.JOOBLE_API_KEY || "",
+  joobleCountry: process.env.JOOBLE_COUNTRY || "India",
   adzunaAppId: process.env.ADZUNA_APP_ID || "",
   adzunaAppKey: process.env.ADZUNA_APP_KEY || "",
   adzunaCountry: (process.env.ADZUNA_COUNTRY || "in").toLowerCase(),
