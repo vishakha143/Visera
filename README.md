@@ -4,7 +4,7 @@ AI-powered resume checker: upload PDF → parse text → ATS analysis → sugges
 
 ## Live
 
-- **App (frontend):** https://visera-git-main-vishakha143s-projects.vercel.app
+- **App (frontend):** https://visera-lyart.vercel.app
 - **API health:** https://visera.onrender.com/api/health
 
 ## Stack
