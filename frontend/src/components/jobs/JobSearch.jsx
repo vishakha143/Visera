@@ -52,6 +52,7 @@ function JobCard({ job, resumeId, versionId, onBanner }) {
                 {job.location}
               </span>
             )}
+            {job.source && <span className="text-xs opacity-70">via {job.source}</span>}
           </p>
         </div>
         <Badge tone={toneFor(m.score)}>{m.score}% match</Badge>
@@ -140,6 +141,7 @@ export function JobSearch({ resumeId, versionId }) {
   }
 
   const notConfigured = status.data && !status.data.configured;
+  const sources = status.data?.sources || [];
 
   return (
     <div className="space-y-5">
@@ -151,10 +153,10 @@ export function JobSearch({ resumeId, versionId }) {
           </div>
         </CardHeader>
 
-        {notConfigured && (
-          <p className="text-sm text-amber-700 bg-amber-50 rounded-xl px-4 py-3 mb-4">
-            Job search isn&apos;t switched on for this server yet — an Adzuna API key needs to be added to
-            the backend.
+        {sources.length > 0 && (
+          <p className="text-xs text-[var(--color-ink-muted)] mb-4">
+            Postings come from {sources.join(" and ")}. Open a result to apply on the employer&apos;s own page.
+            {sources.includes("Remotive") && " This free feed is mostly remote roles, so searches by city may return few results."}
           </p>
         )}
 

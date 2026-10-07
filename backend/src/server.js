@@ -37,6 +37,7 @@ app.use(express.urlencoded({extended : true, limit : "1mb"}));
 app.use(cookieParser());
 if(!env.isProd) app.use(morgan("dev"));
 
+app.get("/", (req, res) => res.json({ name: "Visera API", status: "ok", health: "/api/health" }));
 app.use("/api/health" , healthRouter);
 app.use("/api/auth",authRouter);
 app.use("/api/resumes" , resumeRouter);

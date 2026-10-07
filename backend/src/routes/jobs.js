@@ -10,7 +10,7 @@ const { analyzerLimiter } = require("../middleware/rateLimit");
 
 const Resume = require("../models/Resume");
 const ResumeVersion = require("../models/ResumeVersion");
-const { searchJobs, isConfigured } = require("../services/jobSearchService");
+const { searchJobs, isConfigured, sourcesInUse } = require("../services/jobSearchService");
 const { scoreJob } = require("../services/jobScoring");
 
 const router = express.Router();
@@ -27,7 +27,7 @@ const searchQuery = z.object({
   page: z.coerce.number().int().min(1).max(10).optional(),
 });
 
-router.get("/status", (req, res) => res.json({ configured: isConfigured() }));
+router.get("/status", (req, res) => res.json({ configured: isConfigured(), sources: sourcesInUse() }));
 
 router.get(
   "/search",
