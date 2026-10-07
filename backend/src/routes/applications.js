@@ -19,12 +19,19 @@ const objectIdSchema = z
   .string()
   .refine((v) => mongoose.isValidObjectId(v), { message: "Invalid id" });
 
+// Only web links: the URL is rendered as an href, so "javascript:" etc. must not get in.
+const jobUrlSchema = z
+  .string()
+  .trim()
+  .max(500)
+  .refine((v) => v === "" || /^https?:\/\//i.test(v), { message: "Job link must start with http:// or https://" });
+
 const createBody = z.object({
   resumeId: objectIdSchema,
   versionId: objectIdSchema,
   jobTitle: z.string().trim().min(1).max(160),
   company: z.string().trim().min(1).max(160),
-  jobUrl: z.string().trim().max(500).optional(),
+  jobUrl: jobUrlSchema.optional(),
   status: z.enum(STATUSES).optional(),
   jobMatchId: objectIdSchema.optional(),
   notes: z.string().max(4000).optional(),
@@ -33,7 +40,7 @@ const createBody = z.object({
 const updateBody = z.object({
   jobTitle: z.string().trim().min(1).max(160).optional(),
   company: z.string().trim().min(1).max(160).optional(),
-  jobUrl: z.string().trim().max(500).optional(),
+  jobUrl: jobUrlSchema.optional(),
   status: z.enum(STATUSES).optional(),
   notes: z.string().max(4000).optional(),
 });

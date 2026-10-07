@@ -13,24 +13,45 @@ function isConfigured() {
   return !!genAI;
 }
 
-async function callGeminiJSON({ prompt, responseSchema, temperature = 0.4 }) {
-  const model = genAI.getGenerativeModel({
-    model: env.geminiModel || DEFAULT_MODEL,
-    generationConfig: {
-      temperature,
-      responseMimeType: "application/json",
-      responseSchema,
-    },
-  });
+// Google's newest models regularly answer 503 "high demand", so each request
+// walks a short fallback list instead of failing on the first overloaded model.
+const FALLBACK_MODELS = ["gemini-3.5-flash-lite", "gemini-3.5-flash"];
 
-  const result = await model.generateContent(prompt);
+function modelChain() {
+  return [...new Set([env.geminiModel || DEFAULT_MODEL, ...FALLBACK_MODELS])];
+}
+
+async function generateWithFallback(prompt, { temperature, responseSchema }) {
+  let lastErr;
+  for (const name of modelChain()) {
+    try {
+      const model = genAI.getGenerativeModel({
+        model: name,
+        generationConfig: {
+          temperature,
+          responseMimeType: "application/json",
+          responseSchema,
+        },
+      });
+      const result = await model.generateContent(prompt);
+      return { result, modelName: name };
+    } catch (err) {
+      lastErr = err;
+      console.warn(`[gemini] ${name} failed: ${String(err.message).slice(0, 160)}`);
+    }
+  }
+  throw lastErr;
+}
+
+async function callGeminiJSON({ prompt, responseSchema, temperature = 0.4 }) {
+  const { result, modelName } = await generateWithFallback(prompt, { temperature, responseSchema });
   const text = result.response.text();
   if (!text) throw new Error("Empty response from Gemini");
 
   const usage = result.response.usageMetadata || {};
   return {
     text,
-    model: env.geminiModel || DEFAULT_MODEL,
+    model: modelName,
     usage: {
       promptTokenCount: usage.promptTokenCount,
       candidatesTokenCount: usage.candidatesTokenCount,
@@ -54,4 +75,4 @@ async function withRetry(fn, attempts = 2) {
   throw lastErr;
 }
 
-module.exports = { isConfigured, callGeminiJSON, withRetry, DEFAULT_MODEL };
+module.exports = { isConfigured, callGeminiJSON, generateWithFallback, withRetry, DEFAULT_MODEL };

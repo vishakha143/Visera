@@ -1,6 +1,7 @@
 const { GoogleGenerativeAI, SchemaType } = require("@google/generative-ai");
 const { z } = require("zod");
 const env = require("../config/env");
+const { generateWithFallback } = require("./geminiClient");
 
 const genAI = env.geminiApiKey
   ? new GoogleGenerativeAI(env.geminiApiKey)
@@ -267,20 +268,11 @@ function cleanParsed(data) {
 async function parseResume(rawText) {
   if (!genAI || !rawText || !rawText.trim()) return EMPTY;
 
-  const model = genAI.getGenerativeModel({
-    model: env.geminiModel || "gemini-3.6-flash",
-    generationConfig: {
-      temperature: 0.1,
-      responseMimeType: "application/json",
-      responseSchema,
-    },
-  });
-
   const prompt = buildPrompt(rawText);
 
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
-      const result = await model.generateContent(prompt);
+      const { result } = await generateWithFallback(prompt, { temperature: 0.1, responseSchema });
       const text = result.response.text();
 
       if (!text) throw new Error("Empty response");

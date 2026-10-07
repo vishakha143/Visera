@@ -411,7 +411,7 @@ const rewriteBody = z.object({
 function applyRewritesToText(rawText, rewrites) {
   let result = rawText;
   for (const r of rewrites) {
-    if (!r.original || r.rewritten) continue;
+    if (!r.original || !r.rewritten) continue;
     const idx = result.indexOf(r.original);
     if (idx >= 0) {
       result = result.slice(0, idx) + r.rewritten + result.slice(idx + r.original.length);
@@ -595,6 +595,7 @@ router.post(
   ),
   uploadPdf("file"),
   asyncHandler(async (req, res) => {
+    if (!req.file) throw ApiError.badRequest("PDF file is required");
     const resume = await loadOwnedResume(req);
     const version = await loadVersion(resume._id, req.params.versionId);
 

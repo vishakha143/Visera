@@ -137,6 +137,13 @@ router.post(
       // rather than creating a duplicate.
       user = await User.findOne({ email });
       if (user) {
+        // Never attach a social login to an existing account on the strength
+        // of an email the provider hasn't verified.
+        if (!decoded.email_verified) {
+          throw ApiError.badRequest(
+            "Verify your email with that provider first, or sign in with your password."
+          );
+        }
         user.firebaseUid = decoded.sub;
         if (!user.authProviders.includes(provider)) {
           user.authProviders.push(provider);
@@ -267,6 +274,7 @@ router.post(
     }
 
     user.passwordHash = await User.hashPassword(req.body.newPassword);
+    if (!user.authProviders.includes("password")) user.authProviders.push("password");
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
     await user.save();

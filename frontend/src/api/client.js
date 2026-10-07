@@ -28,6 +28,23 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (res) => res,
   (err) => {
+    // An expired/invalid session would otherwise leave the user "signed in"
+    // with every request failing. Sign-in/reset calls legitimately return 401
+    // (wrong password), so only act when we were holding a saved session.
+    const url = err.config?.url || "";
+    if (err.response?.status === 401 && !url.startsWith("/auth/")) {
+      try {
+        if (localStorage.getItem("auth_user")) {
+          localStorage.removeItem("auth_user");
+          if (!/^\/(login|register|forgot-password|reset-password)/.test(window.location.pathname)) {
+            window.location.assign("/login");
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+
     const message =
       err.response?.data?.error?.message ||
       err.response?.data?.message ||
