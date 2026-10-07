@@ -70,10 +70,16 @@ async function signInWithProvider(provider) {
   if (!auth) {
     throw new Error("Google/GitHub sign-in is not configured for this app yet.");
   }
+  const startedAt = Date.now();
   try {
     const result = await signInWithPopup(auth, provider);
     return result.user.getIdToken();
   } catch (err) {
+    // A popup that closes within moments isn't a user changing their mind — it
+    // is Firebase rejecting this domain (missing from Authorized domains).
+    if (err?.code === "auth/popup-closed-by-user" && Date.now() - startedAt < 2000) {
+      throw toFriendlyError({ code: "auth/unauthorized-domain" });
+    }
     throw toFriendlyError(err);
   }
 }
