@@ -36,7 +36,10 @@ module.exports = {
   clientOrigins,
   clientOrigin: clientOrigins[0] || "http://localhost:5173",
   geminiApiKey: process.env.GEMINI_API_KEY || "",
-  geminiModel: process.env.GEMINI_MODEL || "gemini-2.0-flash",
+  // gemini-2.0-flash* was shut down by Google (June 2026); map stale settings forward.
+  geminiModel: /^gemini-2\.0/.test(process.env.GEMINI_MODEL || "")
+    ? "gemini-3.6-flash"
+    : process.env.GEMINI_MODEL || "gemini-3.6-flash",
   isProd: process.env.NODE_ENV === "production",
   resendApiKey: process.env.RESEND_API_KEY || "",
   brevoApiKey: process.env.BREVO_API_KEY || "",

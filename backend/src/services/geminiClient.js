@@ -3,7 +3,7 @@ const env = require("../config/env");
 
 // Single default, matching config/env.js's own fallback — the one place
 // this string should live, so services can't silently drift apart on it.
-const DEFAULT_MODEL = "gemini-2.0-flash";
+const DEFAULT_MODEL = "gemini-3.6-flash";
 
 const genAI = env.geminiApiKey
   ? new GoogleGenerativeAI(env.geminiApiKey)
