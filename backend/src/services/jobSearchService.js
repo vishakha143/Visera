@@ -1,8 +1,8 @@
 const env = require("../config/env");
 const ApiError = require("../utils/ApiError");
 
-// Job sources. Adzuna (needs a free key, broad local coverage) is used when
-// configured. Otherwise we fall back to two public, keyless feeds — Remotive
+// Job sources. Jooble or Adzuna (free keys, broad local coverage incl. India)
+// are used when configured. Otherwise we fall back to two public, keyless feeds — Remotive
 // and Arbeitnow — so job search works at zero cost out of the box. Every
 // result links to the original posting and names its source.
 
@@ -26,8 +26,14 @@ function isConfigured() {
   return true;
 }
 
+function hasAdzuna() {
+  return !!(env.adzunaAppId && env.adzunaAppKey);
+}
+
 function sourcesInUse() {
-  return env.adzunaAppId && env.adzunaAppKey ? ["Adzuna"] : ["Remotive", "Arbeitnow"];
+  if (env.joobleApiKey) return ["Jooble"];
+  if (hasAdzuna()) return ["Adzuna"];
+  return ["Remotive", "Arbeitnow"];
 }
 
 function stripHtml(html) {
@@ -57,6 +63,44 @@ async function getJson(url) {
   }
   if (!res.ok) throw ApiError.internal(`Job search provider returned ${res.status}.`);
   return res.json();
+}
+
+/* ------------------------------- Jooble ---------------------------------- */
+
+async function searchJooble({ query, location, page }) {
+  let res;
+  try {
+    res = await fetch(`https://jooble.org/api/${encodeURIComponent(env.joobleApiKey)}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ keywords: query, location: location || "", page: String(page) }),
+      signal: AbortSignal.timeout(15000),
+    });
+  } catch {
+    throw ApiError.internal("Couldn't reach the job search provider. Please try again.");
+  }
+  if (res.status === 403 || res.status === 401) {
+    throw ApiError.internal("Job search key was rejected by Jooble. Check JOOBLE_API_KEY.");
+  }
+  if (!res.ok) throw ApiError.internal(`Job search provider returned ${res.status}.`);
+
+  const data = await res.json();
+  return {
+    total: data.totalCount || 0,
+    jobs: (data.jobs || []).map((j) => ({
+      id: `jooble-${j.id}`,
+      source: "Jooble",
+      title: stripHtml(j.title),
+      company: j.company || "",
+      location: j.location || "",
+      description: stripHtml(`${j.title} ${j.snippet}`),
+      url: j.link || "",
+      postedAt: j.updated || null,
+      salaryMin: null,
+      salaryMax: null,
+      contractTime: j.type || null,
+    })),
+  };
 }
 
 /* ------------------------------- Adzuna ---------------------------------- */
@@ -169,7 +213,8 @@ async function searchKeyless({ query, location }) {
 /* --------------------------------- Entry ---------------------------------- */
 
 async function searchJobs({ query, location, page = 1, perPage = 20 }) {
-  if (env.adzunaAppId && env.adzunaAppKey) {
+  if (env.joobleApiKey) return searchJooble({ query, location, page });
+  if (hasAdzuna()) {
     return searchAdzuna({ query, location, page, perPage });
   }
   return searchKeyless({ query, location });
